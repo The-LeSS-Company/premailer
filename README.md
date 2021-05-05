@@ -1,4 +1,4 @@
-# Premailer README [![Build Status](https://travis-ci.org/premailer/premailer.png?branch=master)](https://travis-ci.org/premailer/premailer) [![Gem Version](https://badge.fury.io/rb/premailer.svg)](https://badge.fury.io/rb/premailer)
+# Premailer README [![Build Status](https://travis-ci.org/premailer/premailer.svg?branch=master)](https://travis-ci.org/premailer/premailer) [![Gem Version](https://badge.fury.io/rb/premailer.svg)](https://badge.fury.io/rb/premailer)
 
 ## What is this?
 
@@ -12,7 +12,7 @@ script is my solution.
   - Checks links in `href`, `src` and CSS `url('')`
 * CSS properties are checked against e-mail client capabilities
   - Based on the Email Standards Project's guides
-* A plain text version is created (optional)
+* A [plain text version](https://premailer.github.io/premailer/HtmlToPlainText.html) is created (optional)
 
 ## Installation
 
@@ -68,7 +68,7 @@ Premailer::Adapter.use = :nokogiri_fast
 
 ## Ruby Compatibility
 
-Premailer is tested on Ruby 2.1 and above. JRuby support is close; contributors are welcome.  Checkout the latest build status on the [Travis CI dashboard](https://travis-ci.org/#!/premailer/premailer).
+See .travis.yml for which ruby versions are tested. JRuby support is close, contributors are welcome.  Checkout the latest build status on the [Travis CI dashboard](https://travis-ci.org/#!/premailer/premailer).
 
 ## Premailer-specific CSS
 
@@ -80,6 +80,7 @@ Premailer looks for a few CSS attributes that make working with tables a bit eas
 | -premailer-height | Available on `table`, `tr`, `th` and `td` elements |
 | -premailer-cellpadding | Available on `table` elements |
 | -premailer-cellspacing | Available on `table` elements |
+| -premailer-align | Available on `table` elements |
 | data-premailer="ignore" | Available on `link` and `style` elements. Premailer will ignore these elements entirely. |
 
 Each of these CSS declarations will be copied to appropriate element's attribute.
@@ -95,6 +96,19 @@ will result in
 ```html
 <table cellspacing='5' width='500'>
 ```
+
+## Configuration options
+
+The behavior of Premailer can be configured by passing options in the initializer.
+
+For example, the following will accept HTML from a string and will exclude unmergeable css from being added to the `<head>` of the output document.
+
+```ruby
+premailer = Premailer.new(html_string, with_html_string: true, drop_unmergeable_css_rules: true)
+```
+
+[See here for a full list of the available options](https://premailer.github.io/premailer/Premailer.html#initialize-instance_method).
+
 
 ## Contributions
 

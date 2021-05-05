@@ -1,5 +1,26 @@
 ## Premailer CHANGELOG
 
+### Verion 1.14.3
+* add existing license to gemspec
+
+### Verion 1.14.2
+* fix greedy url() parsing
+
+### Verion 1.14.1
+* Fix to converting inline html 100px to 100
+
+### Verion 1.14.0
+* Convert inline html 100px to 100
+
+### Verion 1.13.1
+* Replace deprecated File.exists? with File.exist? (fixes Ruby 2.8 deprecation warning)
+
+### Verion 1.13.0
+* Fix URI.open deprecation warnings
+
+### Version 1.12.1
+* Fix greedy script regex.
+
 ### Version 1.11.1
 * Fix input encoding in nokogiri adapters.
 

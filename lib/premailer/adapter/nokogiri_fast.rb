@@ -77,18 +77,33 @@ class Premailer
 
           # Duplicate CSS attributes as HTML attributes
           if Premailer::RELATED_ATTRIBUTES.has_key?(el.name) && @options[:css_to_attributes]
-            Premailer::RELATED_ATTRIBUTES[el.name].each do |css_att, html_att|
-              if el[html_att].nil? and not merged[css_att].empty?
-                new_html_att = merged[css_att].gsub(/url\(['"](.*)['"]\)/, '\1').gsub(/;$|\s*!important/, '').strip
-                el[html_att] = css_att.end_with?('color') && @options[:rgb_to_hex_attributes] ? ensure_hex(new_html_att) : new_html_att
+            Premailer::RELATED_ATTRIBUTES[el.name].each do |css_attr, html_attr|
+              if el[html_attr].nil? and not merged[css_attr].empty?
+                new_val = merged[css_attr].dup
+
+                # Remove url() function wrapper
+                new_val.gsub!(/url\((['"])(.*?)\1\)/, '\2')
+
+                # Remove !important, trailing semi-colon, and leading/trailing whitespace
+                new_val.gsub!(/;$|\s*!important/, '').strip!
+
+                # For width and height tags, remove px units
+                new_val.gsub!(/(\d+)px/, '\1') if %w[width height].include?(html_attr)
+
+                # For color-related tags, convert RGB to hex if specified by options
+                new_val = ensure_hex(new_val) if css_attr.end_with?('color') && @options[:rgb_to_hex_attributes]
+
+                el[html_attr] = new_val
               end
+
               unless @options[:preserve_style_attribute]
                 merged.instance_variable_get("@declarations").tap do |declarations|
-                    declarations.delete(css_att)
+                  declarations.delete(css_attr)
                 end
               end
             end
           end
+
           # Collapse multiple rules into one as much as possible.
           merged.create_shorthand! if @options[:create_shorthands]
 
@@ -96,7 +111,7 @@ class Premailer
           el['style'] = merged.declarations_to_s
         end
 
-        doc = write_unmergable_css_rules(doc, @unmergable_rules)
+        doc = write_unmergable_css_rules(doc, @unmergable_rules) unless @options[:drop_unmergeable_css_rules]
 
         if @options[:remove_classes] or @options[:remove_comments]
           doc.traverse do |el|
@@ -206,7 +221,7 @@ class Premailer
           @base_dir = File.dirname(input)
           thing = File.open(input, 'r')
         else
-          thing = open(input)
+          thing = URI.open(input)
         end
 
         if thing.respond_to?(:read)

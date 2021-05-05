@@ -5,7 +5,7 @@ class TestHtmlToPlainText < Premailer::TestCase
   include HtmlToPlainText
 
   def test_to_plain_text_with_fragment
-    premailer = Premailer.new('<p>Test</p>', :with_html_string => true)
+    premailer = Premailer.new('<p>Test</p>', :adapter => :nokogiri, :with_html_string => true)
     assert_match /Test/, premailer.to_plain_text
   end
 
@@ -19,7 +19,7 @@ class TestHtmlToPlainText < Premailer::TestCase
 		</html>
 END_HTML
 
-    premailer = Premailer.new(html, :with_html_string => true)
+    premailer = Premailer.new(html, :adapter => :nokogiri, :with_html_string => true)
     assert_match /Test/, premailer.to_plain_text
   end
 
@@ -31,8 +31,19 @@ END_HTML
 		<p>Test
 END_HTML
 
-    premailer = Premailer.new(html, :with_html_string => true)
+    premailer = Premailer.new(html, :adapter => :nokogiri, :with_html_string => true)
     assert_match /Test/, premailer.to_plain_text
+  end
+
+  def test_to_plain_text_with_script
+    html = <<END_HTML
+    <script>
+    window.location.href
+    </script>
+END_HTML
+
+    premailer = Premailer.new(html, :with_html_string => true)
+    assert_empty premailer.to_plain_text
   end
 
   def test_specialchars
@@ -56,7 +67,7 @@ END_HTML
 		</p>
 END_HTML
 
-    premailer = Premailer.new(html, :with_html_string => true)
+    premailer = Premailer.new(html, :adapter => :nokogiri, :with_html_string => true)
     assert_match /Test line 2/, premailer.to_plain_text
   end
 
@@ -82,7 +93,7 @@ END_HTML
     <!-- end text/html -->
     <p>text</p>
 END_HTML
-    premailer = Premailer.new(html, :with_html_string => true)
+    premailer = Premailer.new(html, :adapter => :nokogiri, :with_html_string => true)
     assert_match /test\n\ntext/, premailer.to_plain_text
   end
 
@@ -119,7 +130,7 @@ END_HTML
   end
 
   def test_img_alt_tags
-    # ensure html imag tags that aren't self-closed are parsed,
+    # ensure html img tags that aren't self-closed are parsed,
     # along with accepting both '' and "" as attribute quotes
 
     # <img alt="" />
@@ -130,6 +141,14 @@ END_HTML
     assert_plaintext 'Example ( http://example.com/ )', "<a href='http://example.com/'><img src='http://example.ru/hello.jpg' alt='Example'/></a>"
     # <img alt=''>
     assert_plaintext 'Example ( http://example.com/ )', "<a href='http://example.com/'><img src='http://example.ru/hello.jpg' alt='Example'></a>"
+
+    # ensure that img alt text is handled properly for multiple
+    # img tags on the same line
+
+    # <img alt="before"> then <img alt="after">
+    assert_plaintext "before then after", '<img alt="before"> then <img alt="after">'
+    # <img> just <img alt="after">
+    assert_plaintext "just after", '<img> just <img alt="after">'
   end
 
   def test_links
@@ -173,6 +192,12 @@ END_HTML
 
     # same text and link
     assert_plaintext 'http://example.com', '<a href="http://example.com">http://example.com</a>'
+
+    # link that includes a single quote
+    assert_plaintext "King's Gambit ( https://en.wikipedia.org/wiki/King's_Gambit )", "<a href=\"https://en.wikipedia.org/wiki/King's_Gambit\">King's Gambit</a>"
+
+    # link that includes double quotes
+    assert_plaintext '"Weird Al" Yankovic ( https://en.wikipedia.org/wiki/%22Weird_Al%22_Yankovic )', '<a href="https://en.wikipedia.org/wiki/%22Weird_Al%22_Yankovic">"Weird Al" Yankovic</a>', nil, 100
   end
 
   # see https://github.com/alexdunae/premailer/issues/72
